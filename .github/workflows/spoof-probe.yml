@@ -1,0 +1,37 @@
+name: Controlled subject-writer spoof probe
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        required: true
+        type: string
+permissions:
+  contents: read
+  statuses: write
+  checks: write
+jobs:
+  probe:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 3
+    steps:
+      - name: Attempt spoof from ordinary subject workflow identity
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module <<'JAVASCRIPT'
+          const token=process.env.GITHUB_TOKEN,sha=process.env.TARGET_SHA;if(!/^[0-9a-f]{40}$/.test(sha))throw Error('Invalid SHA');const repo='Z0sya/scl-v04-app-test',name='Security Contract Lab / independent v0.4';
+          async function call(path,method='GET',body){const r=await fetch('https://api.github.com'+path,{method,headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});let json={};try{json=await r.json();}catch{}return{status:r.status,json};}
+          const status=await call('/repos/'+repo+'/statuses/'+sha,'POST',{state:'success',context:name,description:'Controlled spoof attempt: subject writer, not trusted producer'});
+          const check=await call('/repos/'+repo+'/check-runs','POST',{name,head_sha:sha,status:'completed',conclusion:'success',output:{title:'Controlled forged PASS',summary:'Wrong App producer; must not satisfy trusted gate'}});
+          const rule=await call('/repos/'+repo+'/branches/main/protection','PUT',{required_status_checks:null,enforce_admins:false,required_pull_request_reviews:null,restrictions:null});
+          const trusted=await call('/repos/Z0sya/scl-v04-trusted-gate/contents/config/independent-v04.json');
+          const result={sha,fakeCommitStatusHttp:status.status,fakeCheckHttp:check.status,fakeCheckAppId:check.json.app?.id,disableProtectionHttp:rule.status,readTrustedRepositoryHttp:trusted.status};
+          await (await import('node:fs/promises')).writeFile('spoof-result.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+          if(status.status!==201||check.status!==201||![403,404].includes(rule.status)||![403,404].includes(trusted.status)||check.json.app?.id===5697372)throw Error('Unexpected security boundary result');
+          JAVASCRIPT
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: subject-writer-spoof-result
+          path: spoof-result.json
