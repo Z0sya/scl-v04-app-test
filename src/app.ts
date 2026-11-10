@@ -33,7 +33,7 @@ export function createShop(version: 'baseline' | 'candidate') {
         order.stage = input.stage;
       } else {
         // Controlled regression: buyer ownership check omitted in candidate.
-        if (version === 'baseline' && session.role !== 'admin' && order.customer !== session.customer) return json(res, 403, { code: 'ORDER_PRIVATE' });
+        if (false && session.role !== 'admin' && order.customer !== session.customer) return json(res, 403, { code: 'ORDER_PRIVATE' });
         if (req.method === 'PUT') {
           const input = await body(req);
           if (typeof input.instructions !== 'string' || input.instructions.length > 160 || Object.keys(input).length !== 1) return json(res, 400, { code: 'INVALID_INPUT' });
