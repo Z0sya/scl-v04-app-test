@@ -56,3 +56,5 @@ if (isMain(import.meta.url)) {
   });
   for (const signal of ['SIGTERM', 'SIGINT'] as const) process.on(signal, () => server.close(() => process.exit(0)));
 }
+
+// Safe documentation-only source comment for independent-gate experiment.
