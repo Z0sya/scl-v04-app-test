@@ -1,2 +1,3 @@
-# scl-v04-app-test
-Private synthetic test copy for Security Contract Lab v0.4 authorization experiments. No production deployment.
+# Synthetic shop test target
+
+Generated Security Contract Lab sample. No private toguborder source, bundle, real data, secrets or deployment. Security policy and trusted gate live outside this repository.
